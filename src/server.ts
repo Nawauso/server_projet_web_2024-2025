@@ -14,20 +14,23 @@ const corsOptions = {
 
 const requiredEnv = ["TMDB_URL","TMDB_TOKEN","DB_TYPE"]
 
-for (const env of requiredEnv) {
-    if(process.env[env] === undefined) {
-        throw new Error(`Missing required env: ${env}`);
-    }
-}
+// for (const env of requiredEnv) {
+//     if(process.env[env] === undefined) {
+//         throw new Error(`Missing required env: ${env}`);
+//     }
+// }
 
 app.use(cors(corsOptions));
 
+const data = require("../data.json");
+
 app.get("/", (request: Request, response: Response) => {
-    response.status(200).send("Cocoup toi");
+    response.status(200).send(data[1]);
 });
 
 app.get("/api" , (request: Request, response: Response) => {
-    response.json({films: ["Matrix","Bob l'éponge","Joker"]})
+    //response.json({films: ["Matrix","Bob l'éponge","Joker"]})
+    response.json(data);
 });
 
 app.listen(PORT, () => {
@@ -35,6 +38,14 @@ app.listen(PORT, () => {
 }).on("error", (err: Error) => {
     throw new Error(err.message);
 });
+
+//
+// api.data.results.forEach((movie: any) => {
+//     console.log(movie.title);
+// });
+
+
+
 
 async function getTMDBList() {
     try{
