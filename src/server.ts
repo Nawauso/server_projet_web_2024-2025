@@ -28,9 +28,19 @@ app.get("/", (request: Request, response: Response) => {
     response.status(200).send(data[1]);
 });
 
-app.get("/api" , (request: Request, response: Response) => {
+app.get("/api/films" , (request: Request, response: Response) => {
     //response.json({films: ["Matrix","Bob l'éponge","Joker"]})
     response.json(data);
+});
+
+app.get("/api/genres", (request: Request, response: Response) => {
+    try{
+        response.json(getTMDBGenres());
+    }catch(err) {
+        response.status(500).send("Error loggin genres");
+        console.error(err);
+    }
+
 });
 
 app.listen(PORT, () => {
@@ -45,7 +55,20 @@ app.listen(PORT, () => {
 // });
 
 
+async function getTMDBGenres() {
 
+    try{
+        const response = await axios.get(`https://api.themoviedb.org/3/genre/movie/list?language=fr`, {
+            method: 'GET',
+            headers: {accept: 'application/json', Authorization: `Bearer ${process.env.TMDB_TOKEN}`},
+        });
+        console.log(response.data.genres);
+        return response.data.genres;
+    }
+    catch(err){
+        console.error(err);
+    }
+}
 
 async function getTMDBList() {
     try{
