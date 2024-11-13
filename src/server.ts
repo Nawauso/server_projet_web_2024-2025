@@ -22,7 +22,7 @@ const requiredEnv = ["TMDB_URL","TMDB_TOKEN","DB_TYPE"]
 
 app.use(cors(corsOptions));
 
-const data = require("../filmData.json");
+const data = require("./data/filmData.json");
 
 app.get("/", (request: Request, response: Response) => {
     response.status(200).send(data[1]);
@@ -35,7 +35,7 @@ app.get("/api/films" , (request: Request, response: Response) => {
 
 app.get("/api/genres", (request: Request, response: Response) => {
     try{
-        const genres = require("../genres.json");
+        const genres = require("./data/genres.json");
         response.json(genres);
         console.log(genres);
     }catch(err) {
@@ -47,7 +47,7 @@ app.get("/api/genres", (request: Request, response: Response) => {
 
 app.get("/api/providers", (request: Request, response: Response) => {
     try{
-        const providers = require("../providers.json");
+        const providers = require("./data/providers.json");
         response.json(providers);
         console.log(providers);
     }catch(err) {
