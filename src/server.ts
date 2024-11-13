@@ -2,7 +2,6 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import axios, {isCancel, AxiosError} from 'axios';
-import * as url from "node:url";
 import * as fs from "node:fs";
 
 dotenv.config();
@@ -23,7 +22,7 @@ const requiredEnv = ["TMDB_URL","TMDB_TOKEN","DB_TYPE"]
 
 app.use(cors(corsOptions));
 
-const data = require("../data.json");
+const data = require("../filmData.json");
 
 app.get("/", (request: Request, response: Response) => {
     response.status(200).send(data[1]);
@@ -36,12 +35,28 @@ app.get("/api/films" , (request: Request, response: Response) => {
 
 app.get("/api/genres", (request: Request, response: Response) => {
     try{
+        const genres = require("../genres.json");
         response.json(genres);
+        console.log(genres);
     }catch(err) {
         response.status(500).send("Error loggin genres");
         console.error(err);
     }
 
+});
+
+app.get("/api/providers", (request: Request, response: Response) => {
+    try{
+        if(!fs.existsSync("providers.json")){
+            getTMDBProviders();
+        }
+        const providers = require("../providers.json");
+        response.json(providers);
+        console.log(providers);
+    }catch(err) {
+        response.status(500).send("Error loggin providers");
+        console.error(err);
+    }
 });
 
 app.listen(PORT, () => {
@@ -55,7 +70,20 @@ app.listen(PORT, () => {
 //     console.log(movie.title);
 // });
 
+async function getTMDBProviders() {
 
+        try{
+            const response = await axios.get(`https://api.themoviedb.org/3/watch/providers/movie?language=fr-FR&watch_region=BE'`, {
+                method: 'GET',
+                headers: {accept: 'application/json', Authorization: `Bearer ${process.env.TMDB_TOKEN}`},
+            });
+            console.log(response.data.results);
+            fs.writeFileSync('providers.json', JSON.stringify(response.data.results));
+        }
+        catch(err){
+            console.error(err);
+        }
+}
 
 async function getTMDBGenres() {
 
