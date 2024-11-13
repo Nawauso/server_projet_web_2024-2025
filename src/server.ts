@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import axios, {isCancel, AxiosError} from 'axios';
 import * as url from "node:url";
+import * as fs from "node:fs";
 
 dotenv.config();
 const app = express();
@@ -35,7 +36,7 @@ app.get("/api/films" , (request: Request, response: Response) => {
 
 app.get("/api/genres", (request: Request, response: Response) => {
     try{
-        response.json(getTMDBGenres());
+        response.json(genres);
     }catch(err) {
         response.status(500).send("Error loggin genres");
         console.error(err);
@@ -55,6 +56,7 @@ app.listen(PORT, () => {
 // });
 
 
+
 async function getTMDBGenres() {
 
     try{
@@ -63,7 +65,7 @@ async function getTMDBGenres() {
             headers: {accept: 'application/json', Authorization: `Bearer ${process.env.TMDB_TOKEN}`},
         });
         console.log(response.data.genres);
-        return response.data.genres;
+        fs.writeFileSync('genres.json', JSON.stringify(response.data.genres));
     }
     catch(err){
         console.error(err);
