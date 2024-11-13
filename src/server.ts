@@ -47,9 +47,6 @@ app.get("/api/genres", (request: Request, response: Response) => {
 
 app.get("/api/providers", (request: Request, response: Response) => {
     try{
-        if(!fs.existsSync("providers.json")){
-            getTMDBProviders();
-        }
         const providers = require("../providers.json");
         response.json(providers);
         console.log(providers);
@@ -73,7 +70,7 @@ app.listen(PORT, () => {
 async function getTMDBProviders() {
 
         try{
-            const response = await axios.get(`https://api.themoviedb.org/3/watch/providers/movie?language=fr-FR&watch_region=BE'`, {
+            const response = await axios.get(`https://api.themoviedb.org/3/watch/providers/movie?language=fr-FR&watch_region=BE`, {
                 method: 'GET',
                 headers: {accept: 'application/json', Authorization: `Bearer ${process.env.TMDB_TOKEN}`},
             });
