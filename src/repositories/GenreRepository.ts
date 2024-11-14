@@ -8,7 +8,8 @@ class GenreRepository {
     getGenres(): Genre[] | null {
         if (fs.existsSync(this.genreDataPath)) {
             const data = fs.readFileSync(this.genreDataPath, 'utf8');
-            return JSON.parse(data) as Genre[];
+            //return JSON.parse(data) as Genre[];
+            return JSON.parse(data).map((d:any) => Genre.fromJSON(d))
         }
         return null;
     }

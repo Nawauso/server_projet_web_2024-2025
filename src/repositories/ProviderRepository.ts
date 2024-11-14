@@ -8,7 +8,8 @@ class ProviderRepository {
     getProviders(): Provider[] | null {
         if (fs.existsSync(this.providerDataPath)) {
             const data = fs.readFileSync(this.providerDataPath, 'utf8');
-            return JSON.parse(data) as Provider[];
+            //return JSON.parse(data) as Provider[];
+            return JSON.parse(data).map((d:any) => Provider.fromJSON(d))
         }
         return null;
     }
