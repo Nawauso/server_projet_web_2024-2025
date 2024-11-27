@@ -10,14 +10,14 @@ export class UserEntity {
     @PrimaryGeneratedColumn()
     id!: number
 
-    @Column()
+    @Column({unique: true})
     email!: string
 
     @Column()
-    firstname!: string
+    firstName!: string
 
     @Column()
-    lastname!: string
+    lastName!: string
 
     @Column()
     password!: string

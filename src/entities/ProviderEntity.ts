@@ -1,5 +1,6 @@
 import {PrimaryGeneratedColumn, Column, Entity, ManyToMany} from "typeorm";
 import {UserEntity} from "./UserEntity";
+import {FilmEntity} from "./FilmEntity";
 
 @Entity()
 export class ProviderEntity {
@@ -14,5 +15,7 @@ export class ProviderEntity {
 
     @ManyToMany(() => UserEntity, (user) => user.selectedProviders)
     selectedByUsers!: UserEntity[];
+
+
 
 }
