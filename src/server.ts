@@ -2,6 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import "reflect-metadata"
 import filmRoutes from './routes/FilmRoute';
 import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
