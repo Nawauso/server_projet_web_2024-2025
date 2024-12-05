@@ -41,24 +41,6 @@ AppDataSource.initialize()
 
 const seedData = async () => {
     const userRepository = AppDataSource.getRepository(UserEntity);
-    //const genreRepository = AppDataSource.getRepository(GenreEntity);
-    //
-    // //fetch genres from tmdb api and seed them into the database
-    // try {
-    //     const response = await fetch("https://api.themoviedb.org/3/genre/movie/list?language=fr");
-    //     const data = await response.json();
-    //     const genres = data.genres;
-    //     console.log("Seeding genres...");
-    //     for (const genreData of genres) {
-    //         const genre = genreRepository.create(genreData);
-    //         await genreRepository.save(genre);
-    //         console.log(`Genre seeded: ${genres.name}`);
-    //     }
-    // } catch (error) {
-    //     console.error("Error during seeding:", error);
-    // }
-
-
         const users = [
             {
                 id: 1,

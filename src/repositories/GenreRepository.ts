@@ -1,17 +1,13 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { Genre } from '../models/Genre';
+import { AppDataSource } from "../AppDataSource";
+import { GenreEntity } from "../entities/GenreEntity";
+import { Genre } from "../models/Genre";
 
 class GenreRepository {
-    private genreDataPath = path.resolve(__dirname, '../data/genres.json');
+    private genreRepository = AppDataSource.getRepository(GenreEntity);
 
-    getGenres(): Genre[] | null {
-        if (fs.existsSync(this.genreDataPath)) {
-            const data = fs.readFileSync(this.genreDataPath, 'utf8');
-            //return JSON.parse(data) as Genre[];
-            return JSON.parse(data).map((d:any) => Genre.fromJSON(d))
-        }
-        return null;
+    async getGenres(): Promise<Genre[]> {
+        const genres = await this.genreRepository.find(); // Récupère toutes les données dans la table Genre
+        return genres.map(genreEntity => new Genre(genreEntity.id, genreEntity.name));
     }
 }
 

@@ -6,9 +6,9 @@ const router = Router();
 const genreRepository = new GenreRepository();
 const genreService = new GenreService(genreRepository);
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const genres = genreService.getGenres();
+        const genres = await genreService.getGenres();
         res.json(genres);
     } catch (err) {
         const error = err as Error;

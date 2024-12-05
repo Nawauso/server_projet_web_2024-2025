@@ -8,9 +8,9 @@ class GenreService {
         this.genreRepository = genreRepository;
     }
 
-    getGenres(): Genre[] {
-        const genres = this.genreRepository.getGenres();
-        if (!genres) {
+    async getGenres(): Promise<Genre[]> {
+        const genres = await this.genreRepository.getGenres();
+        if (!genres.length) {
             throw new Error('Genres not found');
         }
         return genres;
