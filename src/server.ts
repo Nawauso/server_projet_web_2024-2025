@@ -28,7 +28,6 @@ app.use('/api/providers', providerRoutes);
 AppDataSource.initialize()
     .then(async () => {
         await seedData();
-
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
         }).on("error", (err: Error) => {

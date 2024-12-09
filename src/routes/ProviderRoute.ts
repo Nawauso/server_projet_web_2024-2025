@@ -6,9 +6,9 @@ const router = Router();
 const providerRepository = new ProviderRepository();
 const providerService = new ProviderService(providerRepository);
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const providers = providerService.getProviders();
+        const providers = await providerService.getProviders();
         res.json(providers);
     } catch (err) {
         const error = err as Error;

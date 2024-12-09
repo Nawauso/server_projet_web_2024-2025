@@ -8,8 +8,8 @@ class ProviderService {
         this.providerRepository = providerRepository;
     }
 
-    getProviders(): Provider[] {
-        const providers = this.providerRepository.getProviders();
+    async getProviders(): Promise<Provider[]> {
+        const providers = await this.providerRepository.getProviders();
         if (!providers) {
             throw new Error('Providers not found');
         }

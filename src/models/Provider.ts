@@ -4,7 +4,7 @@ export class Provider {
     protected provider_Name: string;
     protected provider_ID: number;
 
-    constructor(logo_Path: string, provider_Name: string, provider_ID: number) {
+    constructor(provider_ID: number, provider_Name: string, logo_Path: string) {
         this.logo_Path = logo_Path;
         this.provider_Name = provider_Name;
         this.provider_ID = provider_ID;
