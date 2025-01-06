@@ -3,14 +3,15 @@ import { ProviderEntity } from "../entities/ProviderEntity";
 import * as fs from "fs";
 import * as path from "path";
 
-const seedProvider = async () => {
+ const seedProvider = async () => {
     try {
         // Charger le fichier genres.json
-        const filePath = path.resolve(__dirname, "../data/proviers.json");
+        const filePath = path.resolve(__dirname, "../data/providers.json");
         const providersData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 
         // Initialiser la connexion TypeORM
         await AppDataSource.initialize();
+
         console.log("Connexion à la base de données réussie.");
 
         // Récupérer le repository GenreEntity
@@ -19,9 +20,9 @@ const seedProvider = async () => {
         // Insérer les genres dans la base de données
         for (const provider of providersData) {
             const providerEntity = providerRepository.create({
-                id: provider.id,
-                name: provider.name,
-                logoUrl: provider.logoUrl,
+                id: provider.provider_ID,
+                name: provider.provider_Name,
+                logoUrl: provider.logo_Path,
             });
             await providerRepository.save(providerEntity);
             console.log(`Genre ajouté : ${provider.name}`);
@@ -36,3 +37,4 @@ const seedProvider = async () => {
 };
 
 seedProvider();
+

@@ -7,8 +7,6 @@ import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
-import { GenreEntity } from "./entities/GenreEntity";
-
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || '8080';
@@ -63,7 +61,6 @@ const seedData = async () => {
             await userRepository.save(user);
             console.log(`User seeded: ${user.email}`);
         }
-
         console.log("Data seeding complete.");
 }
 

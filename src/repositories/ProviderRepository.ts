@@ -9,6 +9,7 @@ class ProviderRepository {
         const provider = await this.providerRepository.find(); // Récupère toutes les données dans la table Provider
         return provider.map(ProviderEntity => new Provider(ProviderEntity.id, ProviderEntity.name, ProviderEntity.logoUrl));
     }
+
 }
 
 export default ProviderRepository;

@@ -3,7 +3,7 @@ import { GenreEntity } from "../entities/GenreEntity";
 import * as fs from "fs";
 import * as path from "path";
 
-const seedGenres = async () => {
+ const seedGenres = async () => {
     try {
         // Charger le fichier genres.json
         const filePath = path.resolve(__dirname, "../data/genres.json");
@@ -11,6 +11,7 @@ const seedGenres = async () => {
 
         // Initialiser la connexion TypeORM
         await AppDataSource.initialize();
+
         console.log("Connexion à la base de données réussie.");
 
         // Récupérer le repository GenreEntity

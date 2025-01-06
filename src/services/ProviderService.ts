@@ -10,6 +10,7 @@ class ProviderService {
 
     async getProviders(): Promise<Provider[]> {
         const providers = await this.providerRepository.getProviders();
+        console.log(providers);
         if (!providers) {
             throw new Error('Providers not found');
         }

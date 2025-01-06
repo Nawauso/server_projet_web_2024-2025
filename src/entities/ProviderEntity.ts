@@ -1,6 +1,5 @@
 import {PrimaryGeneratedColumn, Column, Entity, ManyToMany} from "typeorm";
 import {UserEntity} from "./UserEntity";
-import {FilmEntity} from "./FilmEntity";
 
 @Entity()
 export class ProviderEntity {
