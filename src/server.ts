@@ -7,6 +7,9 @@ import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
+import authRoutes from './routes/AuthRoute';
+
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || '8080';
@@ -22,6 +25,7 @@ app.use(express.json());
 app.use('/api/films', filmRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/providers', providerRoutes);
+app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
     .then(async () => {
