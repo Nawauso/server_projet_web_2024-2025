@@ -5,8 +5,11 @@ import "reflect-metadata";
 import filmRoutes from './routes/FilmRoute';
 import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
+import authRoutes from './routes/AuthRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
+import bcrypt from "bcrypt";
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || '8080';
@@ -22,6 +25,7 @@ app.use(express.json());
 app.use('/api/films', filmRoutes);
 app.use('/api/genres', genreRoutes);
 app.use('/api/providers', providerRoutes);
+app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
     .then(async () => {
@@ -44,14 +48,14 @@ const seedData = async () => {
                 firstName: "admin",
                 lastName: "admin",
                 email: "admin@cool.com",
-                password: "admin"
+                password: await bcrypt.hash("admin", 10)
             },
             {
                 id: 2,
                 firstName: "user",
                 lastName: "user",
                 email: "user@cool.com",
-                password: "user"
+                password: await bcrypt.hash("user", 10)
             }
         ];
 
