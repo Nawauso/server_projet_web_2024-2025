@@ -8,6 +8,7 @@ import providerRoutes from './routes/ProviderRoute';
 import authRoutes from './routes/AuthRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 const app = express();
@@ -47,14 +48,14 @@ const seedData = async () => {
                 firstName: "admin",
                 lastName: "admin",
                 email: "admin@cool.com",
-                password: "admin" // a chiffrer avec bcrypt ?
+                password: await bcrypt.hash("admin", 10)
             },
             {
                 id: 2,
                 firstName: "user",
                 lastName: "user",
                 email: "user@cool.com",
-                password: "user" // a chiffrer avec bcrypt ?
+                password: await bcrypt.hash("user", 10)
             }
         ];
 
