@@ -25,7 +25,7 @@ class FilmRepository {
     }
 
     async getAPIFilms(path: string): Promise<void> {
-        const url = `https://api.themoviedb.org/3/discover/movie?include_adult=true&include_video=false&language=fr-BE&sort_by=popularity.desc&page=${path}`;
+        const url = `https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=fr-BE&sort_by=popularity.desc&page=${path}`;
         const options = {
             method: 'GET',
             headers: {
