@@ -53,6 +53,21 @@ class FilmService {
             }
         }
     }
+
+    async getFavoriteFilms(): Promise<FilmEntity[]> {
+        const offset = (this.currentPage - 1) * this.pageSize;
+        const films = await this.filmRepository.getFavoriteFilms(offset, this.pageSize);
+
+        if (films.length === 0) {
+            console.log("Plus de films favoris disponibles à afficher.");
+            return [];
+        }
+
+        console.log(`Page ${this.currentPage} : ${films.length} films favoris récupérés.`);
+        this.currentPage++; // Incrémente la page pour le prochain appel
+
+        return films;
+    }
 }
 
 export default FilmService;

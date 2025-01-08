@@ -66,6 +66,21 @@ class FilmRepository {
             console.error('Une erreur s’est produite lors de la récupération des films depuis l’API :', error);
         }
     }
+
+    async getFavoriteFilms(offset: number, limit: number): Promise<FilmEntity[]> {
+        if (!AppDataSource.isInitialized) {
+            await AppDataSource.initialize();
+        }
+
+        const filmRepository = AppDataSource.getRepository(FilmEntity);
+        return await filmRepository.find({
+            skip: offset,
+            take: limit,
+            order: {
+                popularity: 'DESC' // Optionnel : tri par popularité
+            }
+        });
+    }
 }
 
 export default FilmRepository;

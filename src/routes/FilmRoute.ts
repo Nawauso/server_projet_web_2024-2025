@@ -18,6 +18,16 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/favorites', async (req, res) => {
+    try {
+        const films = await filmService.getFavoriteFilms(); // Récupère les films favoris
+        res.json(films);
+    } catch (err) {
+        const error = err as Error;
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Route pour réinitialiser le compteur de pagination
 router.post('/reset-pagination', (req, res) => {
     try {
