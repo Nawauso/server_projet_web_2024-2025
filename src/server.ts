@@ -5,10 +5,9 @@ import "reflect-metadata";
 import filmRoutes from './routes/FilmRoute';
 import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
+import authRoutes from './routes/AuthRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
-import authRoutes from './routes/AuthRoute';
-
 
 dotenv.config();
 const app = express();
@@ -48,14 +47,14 @@ const seedData = async () => {
                 firstName: "admin",
                 lastName: "admin",
                 email: "admin@cool.com",
-                password: "admin"
+                password: "admin" // a chiffrer avec bcrypt ?
             },
             {
                 id: 2,
                 firstName: "user",
                 lastName: "user",
                 email: "user@cool.com",
-                password: "user"
+                password: "user" // a chiffrer avec bcrypt ?
             }
         ];
 
