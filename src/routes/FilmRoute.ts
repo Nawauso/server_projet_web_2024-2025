@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import FilmService from '../services/FilmService';
 import FilmRepository from '../repositories/FilmRepository';
-import {AuthMiddleware} from "../middlewares/AuthMiddleware";
 
 const router = Router();
 const filmRepository = new FilmRepository();
