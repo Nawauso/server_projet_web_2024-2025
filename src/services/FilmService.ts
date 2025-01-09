@@ -1,5 +1,5 @@
 import FilmRepository from '../repositories/FilmRepository';
-import {FilmEntity} from "../entities/FilmEntity";
+import { FilmEntity } from "../entities/FilmEntity";
 
 class FilmService {
     private currentPage: number = 1; // Gérer la pagination interne
@@ -54,19 +54,46 @@ class FilmService {
         }
     }
 
-    async getFavoriteFilms(): Promise<FilmEntity[]> {
-        const offset = (this.currentPage - 1) * this.pageSize;
-        const films = await this.filmRepository.getFavoriteFilms(offset, this.pageSize);
+    async getFavoriteFilms(userId: string, page: number = 1): Promise<any[]> {
+        try {
+            // Récupérer les genres et providers favoris de l'utilisateur
+            const { genres, providers } = await this.getUserFavorites(userId);
 
-        if (films.length === 0) {
-            console.log("Plus de films favoris disponibles à afficher.");
-            return [];
+            // Appeler l'API avec les paramètres de genres et providers
+            const films = await this.filmRepository.getFavoriteFilmsFromAPI(genres, providers, page);
+
+            console.log(`Page ${page} : ${films.length} films récupérés depuis l'API avec les favoris.`);
+            return films;
+        } catch (error) {
+            console.error("Une erreur s'est produite lors de la récupération des films favoris :", error);
+            throw error;
         }
+    }
 
-        console.log(`Page ${this.currentPage} : ${films.length} films favoris récupérés.`);
-        this.currentPage++; // Incrémente la page pour le prochain appel
+    private async getUserFavorites(userId: string): Promise<{ genres: number[]; providers: number[] }> {
+        try {
+            const [genresResponse, providersResponse] = await Promise.all([
+                fetch(`http://localhost:8080/api/criterias/giveGenres?userId=${userId}`),
+                fetch(`http://localhost:8080/api/criterias/giveProviders?userId=${userId}`)
+            ]);
 
-        return films;
+            if (!genresResponse.ok || !providersResponse.ok) {
+                throw new Error(
+                    `Erreur lors de la récupération des favoris : Genres(${genresResponse.status}) Providers(${providersResponse.status})`
+                );
+            }
+
+            const genresData = await genresResponse.json();
+            const providersData = await providersResponse.json();
+
+            const genres = genresData.map((genre: any) => genre.id);
+            const providers = providersData.map((provider: any) => provider.id);
+
+            return { genres, providers };
+        } catch (error) {
+            console.error("Erreur lors de la récupération des genres et providers favoris :", error);
+            return { genres: [], providers: [] }; // Retourne des listes vides en cas d'erreur
+        }
     }
 }
 
