@@ -13,6 +13,8 @@ Pour l'instant, contentez-vous du dev car le build bien que fonctionnel, encore 
 
 Pour une question de simplicité, créez un fichier `test.deb` dans le fichier racine du serveur, communication en sqlite. Il y a tout ce qu'il faut pour communiquer en MySql si vous le souhaitez mais cela inclus de modifier `src/utils/AppDataSource.ts` et ainsi permettre la connexion avec votre db.
 
+N'oubliez pas de créer un .env à la racine du serveur en vous basant sur le `.env.sample`
+
 Ainsi, vous n'avez qu'à faire au client et au serveur;
 ```npm
 npm run dev
