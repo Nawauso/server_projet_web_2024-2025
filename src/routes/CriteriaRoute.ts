@@ -4,10 +4,8 @@ import CriteriaRepository from "../repositories/CriteriaRepository";
 
 const router = Router();
 const criteriaService = new CriteriaService(new CriteriaRepository());
-
-
-router.get('/give', async (req, res) => {
-    const { userId } = req.query; // Utiliser req.query pour GET
+router.get('/giveGenres', async (req, res) => {
+    const { userId } = req.query;
 
     if (!userId) {
         res.status(400).json({ error: 'Missing userId in the request query.' });
@@ -15,15 +13,32 @@ router.get('/give', async (req, res) => {
     }
 
     try {
-        // Récupérer uniquement les genres sélectionnés pour cet utilisateur
-        const criteria = await criteriaService.getCriteriasForUser(userId as string);
-
-        res.json(criteria); // Retourner les genres sélectionnés
+        const genres = await criteriaService.getSelectedGenresForUser(userId as string);
+        res.json(genres);
     } catch (err) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
 });
+
+// Endpoint pour les providers sélectionnés
+router.get('/giveProviders', async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        res.status(400).json({ error: 'Missing userId in the request query.' });
+        return;
+    }
+
+    try {
+        const providers = await criteriaService.getSelectedProvidersForUser(userId as string);
+        res.json(providers);
+    } catch (err) {
+        const error = err as Error;
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 
 // Enregistrement des critères

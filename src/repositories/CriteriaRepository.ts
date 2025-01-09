@@ -18,8 +18,40 @@ class CriteriaRepository {
         return user.id;
     }
 
+    // Récupérer uniquement les genres sélectionnés pour un utilisateur
+    async getSelectedGenresForUser(email: string): Promise<GenreEntity[]> {
+        const userId = await this.findUserIdByEmail(email);
+
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['selectedGenres'], // Charger uniquement les genres
+        });
+
+        if (!user) {
+            throw new Error(`User with ID ${userId} not found`);
+        }
+
+        return user.selectedGenres;
+    }
+
+    // Récupérer uniquement les providers sélectionnés pour un utilisateur
+    async getSelectedProvidersForUser(email: string): Promise<ProviderEntity[]> {
+        const userId = await this.findUserIdByEmail(email);
+
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['selectedProviders'], // Charger uniquement les providers
+        });
+
+        if (!user) {
+            throw new Error(`User with ID ${userId} not found`);
+        }
+
+        return user.selectedProviders;
+    }
+
     async getCriteriasForUser(email: string): Promise<{ genres: GenreEntity[], providers: ProviderEntity[] }> {
-        const userId = await this.findUserIdByEmail(email); // Recherche l'ID via l'email
+        const userId = await this.findUserIdByEmail(email);
 
         const user = await this.userRepository.findOne({
             where: { id: userId },
@@ -37,33 +69,26 @@ class CriteriaRepository {
     }
 
     async saveCriteriasForUser(email: string, genreIds: number[], providerIds: number[]): Promise<void> {
-        const userId = await this.findUserIdByEmail(email); // Recherche l'ID via l'email
+        const userId = await this.findUserIdByEmail(email);
 
         const user = await this.userRepository.findOne({
             where: { id: userId },
-            relations: ['selectedGenres', 'selectedProviders'], // Charger les relations nécessaires
+            relations: ['selectedGenres', 'selectedProviders'],
         });
 
         if (!user) {
             throw new Error(`User with ID ${userId} not found`);
         }
 
-        // Récupérer les genres et providers par leurs IDs
-        const genres = await this.genreRepository.find({
-            where: { id: In(genreIds) },
-        });
-        const providers = await this.providerRepository.find({
-            where: { id: In(providerIds) },
-        });
+        const genres = await this.genreRepository.find({ where: { id: In(genreIds) } });
+        const providers = await this.providerRepository.find({ where: { id: In(providerIds) } });
 
-
-        // Associer les genres et providers à l'utilisateur
         user.selectedGenres = genres;
         user.selectedProviders = providers;
 
-        // Sauvegarder l'utilisateur avec ses relations mises à jour
         await this.userRepository.save(user);
     }
 }
 
 export default CriteriaRepository;
+
