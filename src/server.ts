@@ -7,6 +7,7 @@ import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
 import authRoutes from './routes/AuthRoute';
 import criteriaRoutes from './routes/CriteriaRoute';
+import groupRoutes from './routes/GroupRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
 import {AuthMiddleware} from "./middlewares/AuthMiddleware";
@@ -24,15 +25,16 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
+app.use('/api/groups', AuthMiddleware, groupRoutes);
 app.use('/api/films', AuthMiddleware, filmRoutes);
 app.use('/api/genres', AuthMiddleware, genreRoutes);
 app.use('/api/providers', AuthMiddleware, providerRoutes);
-app.use('/api/criterias', criteriaRoutes);
+app.use('/api/criterias', AuthMiddleware, criteriaRoutes);
 app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
     .then(async () => {
-        await seedData();
+        //await seedData();
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
         }).on("error", (err: Error) => {

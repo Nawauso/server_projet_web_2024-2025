@@ -26,8 +26,8 @@ export class UserEntity {
     @MinLength(10)
     password!: string
 
-    @ManyToOne(() => GroupEntity, (group) => group.user)
-    groups!: GroupEntity[]
+    @ManyToOne(() => GroupEntity, (group) => group.user, { nullable: true, onDelete: "SET NULL" })
+    group!: GroupEntity;
 
     @ManyToMany(() => GenreEntity, (genre) => genre.selectedByUsers)
     @JoinTable()

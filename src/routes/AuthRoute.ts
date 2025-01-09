@@ -1,10 +1,6 @@
-import { Router, Request, Response} from 'express';
+import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
-
-interface CustomRequest extends Request {
-    user?: any;
-}
 
 const router = Router();
 
@@ -24,7 +20,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Endpoint d'inscription
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
     try {
@@ -43,12 +39,10 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // Endpoint pour vérifier l'authentification
-router.get('/verify', AuthMiddleware, (req: CustomRequest, res: Response): void => {
-    const user = req.user; // Récupère l'utilisateur décodé depuis le token
+router.get('/verify', AuthMiddleware, (req: Request, res: Response) => {
+    const user = (req as any).user; // Récupère l'utilisateur décodé depuis le token
     res.status(200).json({ message: "Authentification valide.", user });
     console.log("Authentification valide.");
 });
-
-
 
 export default router;
