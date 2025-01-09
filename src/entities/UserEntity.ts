@@ -15,12 +15,10 @@ export class UserEntity {
     @IsEmail()
     email!: string
 
-    @Column()
-    @IsNotEmpty()
+    @Column({nullable : true})
     firstName!: string
 
-    @IsNotEmpty()
-    @Column()
+    @Column({nullable : true})
     lastName!: string
 
     @Column()

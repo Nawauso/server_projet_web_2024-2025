@@ -46,15 +46,15 @@ const seedData = async () => {
         const users = [
             {
                 id: 1,
-                firstName: "admin",
-                lastName: "admin",
+                //firstName: "admin",
+                //lastName: "admin",
                 email: "admin@cool.com",
                 password: await bcrypt.hash("admin", 10)
             },
             {
                 id: 2,
-                firstName: "user",
-                lastName: "user",
+                //firstName: "user",
+                //lastName: "user",
                 email: "user@cool.com",
                 password: await bcrypt.hash("user", 10)
             }
