@@ -24,9 +24,6 @@ class CriteriaService {
     }
 
     async saveCriteriasForUser(userEmail: string, genreIds: number[], providerIds: number[]): Promise<void> {
-        if (!genreIds.length && !providerIds.length) {
-            throw new Error('No genres or providers provided');
-        }
 
         await this.criteriaRepository.saveCriteriasForUser(userEmail, genreIds, providerIds);
     }

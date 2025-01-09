@@ -6,23 +6,25 @@ const router = Router();
 const criteriaService = new CriteriaService(new CriteriaRepository());
 
 
-// Récupération des critères
-router.post('/criterias', async (req, res) => {
-    const { userId } = req.body; // Récupérer l'email comme userId
+router.get('/give', async (req, res) => {
+    const { userId } = req.query; // Utiliser req.query pour GET
 
     if (!userId) {
-        res.status(400).json({ error: 'Missing userId in the request body.' });
+        res.status(400).json({ error: 'Missing userId in the request query.' });
         return;
     }
 
     try {
-        const criteria = await criteriaService.getCriteriasForUser(userId);
-        res.json(criteria);
+        // Récupérer uniquement les genres sélectionnés pour cet utilisateur
+        const criteria = await criteriaService.getCriteriasForUser(userId as string);
+
+        res.json(criteria); // Retourner les genres sélectionnés
     } catch (err) {
         const error = err as Error;
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // Enregistrement des critères
 router.post('/', async (req, res) => {

@@ -56,6 +56,7 @@ class CriteriaRepository {
             where: { id: In(providerIds) },
         });
 
+
         // Associer les genres et providers à l'utilisateur
         user.selectedGenres = genres;
         user.selectedProviders = providers;
