@@ -30,7 +30,7 @@ class FilmRepository {
             method: 'GET',
             headers: {
                 accept: 'application/json',
-                Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjNzdjMmI2ODEwNDI0Zjg3MzI0NTk5YmFkOTA3YzMwZSIsIm5iZiI6MTcyOTE2ODgzMi4yNTEwMDAyLCJzdWIiOiI2NzExMDVjMDFiOTEyYWRkMmVkYmVlZTciLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.z0msj7SpNTvHUVfMVCwPixfFUKEE_wAwaWBpjGqkbc0'
+                Authorization: " Bearer " + process.env.TMDB_TOKEN
             }
         };
 
@@ -67,20 +67,56 @@ class FilmRepository {
         }
     }
 
-    async getFavoriteFilms(offset: number, limit: number): Promise<FilmEntity[]> {
-        if (!AppDataSource.isInitialized) {
-            await AppDataSource.initialize();
+    async getFavoriteFilmsFromAPI(genreIds: number[], providerIds: number[], page: number): Promise<any[]> {
+        const apiKey = process.env.TMDB_TOKEN;
+        if (!apiKey) {
+            console.error("Erreur : TMDB_API_KEY manquant dans les variables d'environnement.");
+            return [];
         }
 
-        const filmRepository = AppDataSource.getRepository(FilmEntity);
-        return await filmRepository.find({
-            skip: offset,
-            take: limit,
-            order: {
-                popularity: 'DESC' // Optionnel : tri par popularité
+        // Construire l'URL manuellement avec concaténation
+        const baseURL = "https://api.themoviedb.org/3/discover/movie";
+        const url = `${baseURL}?include_adult=false&include_video=false&language=fr-BE&sort_by=popularity.desc&page=${page}` +
+            `&with_genres=${genreIds.join(",")}&with_watch_providers=${providerIds.join(",")}&watch_region=BE`;
+
+        const options = {
+            method: "GET",
+            headers: {
+                accept: "application/json",
+                Authorization: `Bearer ${apiKey}`
             }
-        });
+        };
+
+        try {
+            const response = await fetch(url, options);
+
+            if (!response.ok) {
+                console.error(`HTTP Error: ${response.status} - ${response.statusText}`);
+                if (response.status === 401) {
+                    console.error("Erreur 401 : Vérifiez que la clé API est correcte et valide.");
+                }
+                return [];
+            }
+
+            const data = await response.json();
+            return data.results.map((film: any) => ({
+                id: film.id,
+                title: film.title || "Titre inconnu",
+                overview: film.overview || "Pas de description disponible",
+                releaseDate: film.release_date || null,
+                imageUrl: film.poster_path || null,
+                genres: film.genre_ids || [],
+                popularity: film.popularity || 0,
+                voteAverage: film.vote_average || 0,
+                voteCount: film.vote_count || 0
+            }));
+        } catch (error) {
+            console.error("Une erreur s'est produite lors de la récupération des films favoris :", error);
+            return [];
+        }
     }
+
+
 }
 
 export default FilmRepository;

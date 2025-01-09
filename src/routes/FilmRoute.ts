@@ -17,10 +17,16 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+router.post('/favorites', async (req, res) => {
+    const { userId } = req.body; // Extraire userId depuis le corps de la requête
 
-router.get('/favorites', async (req, res) => {
+    if (!userId) {
+        res.status(400).json({ error: "Missing userId in the request body." });
+        return;
+    }
+
     try {
-        const films = await filmService.getFavoriteFilms(); // Récupère les films favoris
+        const films = await filmService.getFavoriteFilms(userId as string); // Utiliser userId pour récupérer les films
         res.json(films);
     } catch (err) {
         const error = err as Error;
