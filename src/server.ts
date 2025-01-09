@@ -6,10 +6,11 @@ import filmRoutes from './routes/FilmRoute';
 import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
 import authRoutes from './routes/AuthRoute';
+import criteriaRoutes from './routes/CriteriaRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
-import bcrypt from "bcrypt";
 import {AuthMiddleware} from "./middlewares/AuthMiddleware";
+import bcrypt from "bcrypt";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/api/films', AuthMiddleware, filmRoutes);
 app.use('/api/genres', AuthMiddleware, genreRoutes);
 app.use('/api/providers', AuthMiddleware, providerRoutes);
+app.use('/api/criterias', criteriaRoutes);
 app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
