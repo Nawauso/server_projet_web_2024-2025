@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "nodemon src/server.ts",
     "seed:genres": "ts-node src/seed/SeedGenre.ts",
-    "seed:providers": "ts-node src/seed/SeedProvider.ts"
+    "seed:providers": "ts-node src/seed/SeedProvider.ts",
+    "test": "jest --watch"
   },
   "keywords": [],
   "author": "",
@@ -31,10 +32,13 @@
     "@types/cors": "^2.8.17",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.7.5",
     "concurrently": "^9.0.1",
+    "jest": "^29.7.0",
     "nodemon": "^3.1.7",
     "sqlite3": "^5.1.7",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
