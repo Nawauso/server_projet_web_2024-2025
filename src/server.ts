@@ -9,6 +9,7 @@ import authRoutes from './routes/AuthRoute';
 import { AppDataSource } from "./AppDataSource";
 import { UserEntity } from "./entities/UserEntity";
 import bcrypt from "bcrypt";
+import {AuthMiddleware} from "./middlewares/AuthMiddleware";
 
 dotenv.config();
 const app = express();
@@ -22,9 +23,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
-app.use('/api/films', filmRoutes);
-app.use('/api/genres', genreRoutes);
-app.use('/api/providers', providerRoutes);
+app.use('/api/films', AuthMiddleware, filmRoutes);
+app.use('/api/genres', AuthMiddleware, genreRoutes);
+app.use('/api/providers', AuthMiddleware, providerRoutes);
 app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import {NextFunction, Request, Response} from 'express';
 import jwt from 'jsonwebtoken';
 
 interface CustomRequest extends Request {
@@ -9,16 +9,18 @@ export const AuthMiddleware = (req: CustomRequest, res: Response, next: NextFunc
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-        return res.status(401).json({ message: 'Token manquant.' });
+        res.status(401).json({ message: 'Token manquant.' });
+        console.log("Token manquant");
+        return;
     }
 
     const token = authHeader.split(' ')[1];
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-        req.user = decoded;
+        req.user = jwt.verify(token, process.env.JWT_SECRET as string);
         next();
     } catch (error) {
         res.status(403).json({ message: 'Token invalide.' });
+        console.log("Token invalide");
     }
 };
