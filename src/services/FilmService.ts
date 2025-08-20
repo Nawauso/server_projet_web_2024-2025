@@ -51,19 +51,36 @@ class FilmService {
 
     async getFavoriteFilms(userId: string | number, page: number = 1): Promise<any[]> {
         try {
-            const idNum = typeof userId === "number" ? userId : Number(userId);
-            if (!Number.isFinite(idNum)) throw new Error(`userId invalide: "${userId}"`);
+            let idNum: number | null = null;
 
+            if (typeof userId === "number") {
+                idNum = userId;
+            } else {
+                // Tente une conversion numérique rapide...
+                const maybeNum = Number(userId);
+                if (Number.isFinite(maybeNum)) {
+                    idNum = maybeNum;
+                } else {
+                    // ...sinon on traite comme un email et on va chercher l'id en base
+                    const userRepo = AppDataSource.getRepository(UserEntity);
+                    const user = await userRepo.findOne({ where: { email: userId } });
+                    if (!user) {
+                        throw new Error(`Utilisateur introuvable pour l'identifiant fourni: "${userId}"`);
+                    }
+                    idNum = user.id;
+                }
+            }
+
+            // À partir d’ici on a un id numérique fiable
             const { genres, providers } = await this.getUserFavorites(idNum);
             const films = await this.filmRepository.getFavoriteFilmsFromAPI(genres, providers, page);
-
-            console.log(`Page ${page} : ${films.length} films récupérés depuis l'API avec les favoris.`);
             return films;
         } catch (error) {
             console.error("Une erreur s'est produite lors de la récupération des films favoris :", error);
             throw error;
         }
     }
+
 
     private async getUserFavorites(userId: number): Promise<{ genres: number[]; providers: number[] }> {
         const user = await AppDataSource.getRepository(UserEntity).findOne({
