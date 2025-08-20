@@ -9,9 +9,9 @@ import authRoutes from './routes/AuthRoute';
 import criteriaRoutes from './routes/CriteriaRoute';
 import groupRoutes from './routes/GroupRoute';
 import { AppDataSource } from "./AppDataSource";
-import { UserEntity } from "./entities/UserEntity";
 import {AuthMiddleware} from "./middlewares/AuthMiddleware";
-import bcrypt from "bcrypt";
+import { seedGenres } from './seed/SeedGenre';
+import { seedProviders } from './seed/SeedProvider';
 
 dotenv.config();
 const app = express();
@@ -34,7 +34,16 @@ app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
     .then(async () => {
-        //await seedData();
+        try {
+            const [g, p] = await Promise.all([
+                seedGenres(),      // idempotent (n’ajoute pas les doublons)
+                seedProviders(),
+            ]);
+            console.log(`Seeds OK -> genres:+${g}, providers:+${p}`);
+        } catch (e) {
+            console.error('Erreur lors des seeds initiaux :', e);
+        }
+
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
         }).on("error", (err: Error) => {
@@ -44,32 +53,3 @@ AppDataSource.initialize()
     .catch((err: Error) => {
         console.error(err);
     });
-
-const seedData = async () => {
-    const userRepository = AppDataSource.getRepository(UserEntity);
-        const users = [
-            {
-                id: 1,
-                //firstName: "admin",
-                //lastName: "admin",
-                email: "admin@cool.com",
-                password: await bcrypt.hash("admin", 10)
-            },
-            {
-                id: 2,
-                //firstName: "user",
-                //lastName: "user",
-                email: "user@cool.com",
-                password: await bcrypt.hash("user", 10)
-            }
-        ];
-
-        console.log("Seeding users...");
-        for (const userData of users) {
-            const user = userRepository.create(userData);
-            await userRepository.save(user);
-            console.log(`User seeded: ${user.email}`);
-        }
-        console.log("Data seeding complete.");
-}
-

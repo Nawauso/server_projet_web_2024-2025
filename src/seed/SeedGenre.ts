@@ -1,38 +1,59 @@
 import { AppDataSource } from "../AppDataSource";
 import { GenreEntity } from "../entities/GenreEntity";
-import * as fs from "fs";
-import * as path from "path";
+import dotenv from "dotenv";
+dotenv.config();
 
- const seedGenres = async () => {
-    try {
-        // Charger le fichier genres.json
-        const filePath = path.resolve(__dirname, "../data/genres.json");
-        const genresData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+// Si Node < 18, décommente la ligne suivante et "npm i node-fetch"
+// // import fetch from "node-fetch";
 
-        // Initialiser la connexion TypeORM
-        await AppDataSource.initialize();
+function buildHeaders() {
+    const token = process.env.TMDB_V4_TOKEN?.trim();
+    if (!token) throw new Error("TMDB_V4_TOKEN manquant dans .env");
+    return { accept: "application/json", Authorization: `Bearer ${token}` };
+}
 
-        console.log("Connexion à la base de données réussie.");
-
-        // Récupérer le repository GenreEntity
-        const genreRepository = AppDataSource.getRepository(GenreEntity);
-
-        // Insérer les genres dans la base de données
-        for (const genre of genresData) {
-            const genreEntity = genreRepository.create({
-                id: genre.id,
-                name: genre.name,
-            });
-            await genreRepository.save(genreEntity);
-            console.log(`Genre ajouté : ${genre.name}`);
-        }
-
-        console.log("Tous les genres ont été ajoutés à la base de données.");
-        process.exit(0);
-    } catch (error) {
-        console.error("Erreur lors de l'ajout des genres :", error);
-        process.exit(1);
+async function fetchTmdbGenres(type: "movie" | "tv", language = "fr-FR") {
+    const url = `https://api.themoviedb.org/3/genre/${type}/list?language=${encodeURIComponent(language)}`;
+    const res = await fetch(url, { headers: buildHeaders() });
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`TMDB ${type} genres HTTP ${res.status} ${res.statusText} — ${body}`);
     }
-};
+    const json = (await res.json()) as { genres?: Array<{ id: number; name: string }> };
+    return Array.isArray(json.genres) ? json.genres : [];
+}
 
-seedGenres();
+export async function seedGenres(): Promise<number> {
+    if (!AppDataSource.isInitialized) await AppDataSource.initialize();
+    const repo = AppDataSource.getRepository(GenreEntity);
+
+    const language = process.env.TMDB_LANGUAGE || "fr-FR";
+    const [movie, tv] = await Promise.all([
+        fetchTmdbGenres("movie", language),
+        fetchTmdbGenres("tv", language),
+    ]);
+
+    // dédup par nom (on ne garde que ce dont on a besoin)
+    const set = new Set<string>();
+    let inserted = 0;
+    for (const g of [...movie, ...tv]) {
+        const name = (g?.name || "").trim();
+        if (!name || set.has(name)) continue;
+        set.add(name);
+
+        const exists = await repo.findOne({ where: { name } });
+        if (exists) continue;
+
+        await repo.save(repo.create({ name })); // id auto-généré (PrimaryGeneratedColumn)
+        inserted++;
+        console.log(`Genre ajouté : ${name}`);
+    }
+    return inserted;
+}
+
+// Mode CLI : ts-node src/seed/SeedGenre.ts --cli
+if (process.argv.includes("--cli")) {
+    seedGenres()
+        .then(n => { console.log(`Seed Genres terminé (${n} ajoutés).`); process.exit(0); })
+        .catch(e => { console.error(e); process.exit(1); });
+}

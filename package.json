@@ -7,9 +7,9 @@
     "build": "npx tsc",
     "start": "node dist/index.js",
     "dev": "nodemon src/server.ts",
-    "seed:genres": "ts-node src/seed/SeedGenre.ts",
-    "seed:providers": "ts-node src/seed/SeedProvider.ts",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "seed:genres": "ts-node src/seed/SeedGenre.ts --cli",
+    "seed:providers": "ts-node src/seed/SeedProvider.ts --cli"
   },
   "keywords": [],
   "author": "",
