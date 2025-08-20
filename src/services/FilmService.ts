@@ -49,14 +49,10 @@ class FilmService {
         }
     }
 
-    // 👇 Accepte string | number et convertit proprement
     async getFavoriteFilms(userId: string | number, page: number = 1): Promise<any[]> {
         try {
-            const idNum =
-                typeof userId === "number" ? userId : Number(userId);
-            if (!Number.isFinite(idNum)) {
-                throw new Error(`userId invalide: "${userId}"`);
-            }
+            const idNum = typeof userId === "number" ? userId : Number(userId);
+            if (!Number.isFinite(idNum)) throw new Error(`userId invalide: "${userId}"`);
 
             const { genres, providers } = await this.getUserFavorites(idNum);
             const films = await this.filmRepository.getFavoriteFilmsFromAPI(genres, providers, page);
@@ -69,7 +65,6 @@ class FilmService {
         }
     }
 
-    // 👇 Garde bien un number ici
     private async getUserFavorites(userId: number): Promise<{ genres: number[]; providers: number[] }> {
         const user = await AppDataSource.getRepository(UserEntity).findOne({
             where: { id: userId },

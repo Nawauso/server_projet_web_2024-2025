@@ -1,45 +1,41 @@
-import {PrimaryGeneratedColumn, Column, Entity, ManyToMany, JoinTable} from "typeorm";
-import {ProviderEntity} from "./ProviderEntity";
-import {UserEntity} from "./UserEntity";
+import { PrimaryColumn, Column, Entity, ManyToMany } from "typeorm";
+import { UserEntity } from "./UserEntity";
 
 @Entity()
 export class FilmEntity {
-    @PrimaryGeneratedColumn()
-    id!: number
+    @PrimaryColumn()
+    id!: number; // id TMDB
 
     @Column()
-    title!: string
+    title!: string;
 
-    @Column()
-    overview!: string
+    @Column({ type: 'text' })
+    overview!: string;
 
-    @Column()
-    releaseDate!: Date
+    @Column({ type: 'date', nullable: true })
+    releaseDate!: Date | null;
 
-    @Column()
-    imageUrl!: string
+    @Column({ type: 'text', nullable: true })
+    imageUrl!: string | null;
 
-    @Column()
-    genresId!: string
+    @Column({ type: 'text', nullable: true })
+    genresId!: string | null;
 
-    @Column()
-    popularity!: number
+    @Column({ type: 'float', default: 0 })
+    popularity!: number;
 
-    @Column()
-    voteAverage!: number
+    @Column({ type: 'float', default: 0 })
+    voteAverage!: number;
 
-    @Column()
-    voteCount!: number
+    @Column({ type: 'int', default: 0 })
+    voteCount!: number;
 
     @ManyToMany(() => UserEntity, (user) => user.IsView)
-    IsViewByUsers!: boolean
+    IsViewByUsers!: UserEntity[];
 
     @ManyToMany(() => UserEntity, (user) => user.likedFilms)
     likedByUsers!: UserEntity[];
 
     @ManyToMany(() => UserEntity, (user) => user.dislikedFilms)
     dislikedByUsers!: UserEntity[];
-
-
-
 }

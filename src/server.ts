@@ -16,7 +16,6 @@ import { AuthMiddleware } from './middlewares/AuthMiddleware';
 import { seedGenres } from './seed/SeedGenre';
 import { seedProviders } from './seed/SeedProvider';
 
-// 👉 IMPORTS AJOUTÉS
 import { UserEntity } from './entities/UserEntity';
 import bcrypt from 'bcrypt';
 
@@ -31,42 +30,36 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Routes
+// Routes protégées
 app.use('/api/groups', AuthMiddleware, groupRoutes);
 app.use('/api/films', AuthMiddleware, filmRoutes);
 app.use('/api/genres', AuthMiddleware, genreRoutes);
 app.use('/api/providers', AuthMiddleware, providerRoutes);
 app.use('/api/criterias', AuthMiddleware, criteriaRoutes);
+// Route publique auth
 app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()
     .then(async () => {
         try {
-            const [g, p, u] = await Promise.all([
-                seedGenres(),      // idempotent
-                seedProviders(),   // idempotent
-                seedUsers(),       // 👈 seed utilisateurs par défaut (idempotent)
-            ]);
+            const [g, p, u] = await Promise.all([seedGenres(), seedProviders(), seedUsers()]);
             console.log(`Seeds OK -> genres:+${g}, providers:+${p}, users:+${u}`);
         } catch (e) {
             console.error('Erreur lors des seeds initiaux :', e);
         }
 
-        app.listen(PORT, () => {
-            console.log(`Server started on port ${PORT}`);
-        }).on('error', (err: Error) => {
-            console.error(err);
-        });
+        app
+            .listen(PORT, () => {
+                console.log(`Server started on port ${PORT}`);
+            })
+            .on('error', (err: Error) => {
+                console.error(err);
+            });
     })
     .catch((err: Error) => {
         console.error(err);
     });
 
-/**
- * Seed des utilisateurs par défaut (admin@cool.com / admin, user@cool.com / user)
- * - Hash bcrypt
- * - Idempotent (ne recrée pas si l'email existe)
- */
 async function seedUsers(): Promise<number> {
     const repo = AppDataSource.getRepository(UserEntity);
 
@@ -83,8 +76,7 @@ async function seedUsers(): Promise<number> {
         const userData: Partial<UserEntity> = {
             email: w.email,
             password: await bcrypt.hash(w.password, 10),
-            // Si votre entité n'a pas firstName/lastName, ces champs seront simplement ignorés
-            // (les garder ne pose pas de souci si vos colonnes sont nullable=false : adaptez si besoin)
+            // Si vos colonnes firstName/lastName n'existent pas ou ne sont pas nullable, adaptez ici.
             firstName: (w as any).firstName,
             lastName:  (w as any).lastName,
         };

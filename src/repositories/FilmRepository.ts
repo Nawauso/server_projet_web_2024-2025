@@ -1,33 +1,113 @@
 import { AppDataSource } from "../AppDataSource";
 import { FilmEntity } from "../entities/FilmEntity";
 
-// 👇 Helpers TMDB (v4) + filtre "no sex"
+// ---- Types & helpers ----
+export type TMDBMovie = {
+    id: number;
+    adult?: boolean;
+    title?: string;
+    original_title?: string;
+    overview?: string;
+    poster_path?: string | null;
+    genre_ids?: number[];
+    release_date?: string | null;
+    vote_average?: number;
+    vote_count?: number;
+    popularity?: number;
+};
+
 function tmdbHeaders() {
     const token = process.env.TMDB_V4_TOKEN?.trim();
     if (!token) throw new Error("TMDB_V4_TOKEN manquant dans .env");
     return { accept: "application/json", Authorization: `Bearer ${token}` };
 }
 
-function isNotSexual(movie: any): boolean {
-    // 1) drapeau "adult" côté TMDB
+function theatricalRegions(): string[] {
+    const val = process.env.TMDB_THEATRICAL_REGIONS || "BE,FR";
+    return val.split(",").map(s => s.trim()).filter(Boolean);
+}
+
+function theatricalOnly(): boolean {
+    return String(process.env.TMDB_THEATRICAL_ONLY || "true").toLowerCase() === "true";
+}
+
+function isNotSexual(movie: TMDBMovie): boolean {
     if (movie?.adult) return false;
-
-    // 2) filtre titre/overview (FR + EN)
-    const text = `${movie?.title || ""} ${movie?.original_title || ""} ${movie?.overview || ""}`
-        .toLowerCase();
-
+    const text = `${movie?.title || ""} ${movie?.original_title || ""} ${movie?.overview || ""}`.toLowerCase();
     const banned = [
         "porn", "porno", "pornographie", "xxx",
         "sex ", " sexual", " sexe", "sexuel", "sexualité",
         "érot", "erotic", "hentai",
         "nudité", "nudity",
         "fetish", "fétich", "bdsm", "bondage",
-        "striptease", "x-rated", "x-rated", "adult only"
+        "striptease", "x-rated", "adult only"
     ];
-
     return !banned.some(k => text.includes(k));
 }
 
+function ratingThresholds() {
+    const minStars = Number(process.env.MIN_RATING_STARS ?? 2); // 0..5
+    const minVotes = Number(process.env.MIN_VOTE_COUNT ?? 50);
+    const minAvg10 = Math.max(0, Math.min(10, (Number.isFinite(minStars) ? minStars : 2) * 2)); // /5 -> /10
+    const minVotesInt = Number.isFinite(minVotes) ? Math.max(0, Math.floor(minVotes)) : 50;
+    return { minAvg10, minVotes: minVotesInt };
+}
+
+function passRating(movie: TMDBMovie, th: { minAvg10: number; minVotes: number }) {
+    return (movie?.vote_average ?? 0) >= th.minAvg10 && (movie?.vote_count ?? 0) >= th.minVotes;
+}
+
+// ---- Nouveau : filtre description ----
+function minOverviewChars(): number {
+    const n = Number(process.env.MIN_OVERVIEW_CHARS ?? 30);
+    return Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 30;
+}
+
+function hasOverview(movie: TMDBMovie, minChars: number): boolean {
+    const ov = (movie?.overview ?? "").trim();
+    return ov.length >= minChars;
+}
+
+// Construit l’URL Discover selon région + filtres communs
+function buildDiscoverUrl(params: {
+    page: number | string;
+    region: string;
+    language: string;
+    minAvg10: number;
+    minVotes: number;
+    genres?: number[];
+    providers?: number[];
+    providerRegion?: string; // utiliser la même région pour watch providers
+}) {
+    const { page, region, language, minAvg10, minVotes, genres = [], providers = [], providerRegion } = params;
+
+    let url =
+        `https://api.themoviedb.org/3/discover/movie` +
+        `?include_adult=false&include_video=false` +
+        `&language=${encodeURIComponent(language)}` +
+        `&region=${encodeURIComponent(region)}` +
+        `&sort_by=popularity.desc` +
+        `&vote_average.gte=${minAvg10}` +
+        `&vote_count.gte=${minVotes}` +
+        `&page=${page}`;
+
+    // Limiter aux sorties cinéma (2 = Theatrical limited, 3 = Theatrical)
+    if (theatricalOnly()) {
+        url += `&with_release_type=3|2`;
+    }
+
+    if (genres.length) {
+        url += `&with_genres=${genres.join(",")}`;
+    }
+    if (providers.length) {
+        const wr = providerRegion || region;
+        url += `&with_watch_providers=${providers.join(",")}&watch_region=${encodeURIComponent(wr)}`;
+    }
+
+    return url;
+}
+
+// ---- Repository ----
 class FilmRepository {
     async countFilmsInDB(): Promise<number> {
         if (!AppDataSource.isInitialized) await AppDataSource.initialize();
@@ -44,97 +124,112 @@ class FilmRepository {
         });
     }
 
-    // ✅ v4 + filtre "adult"/mots-clés
+    // Remplit la DB depuis TMDB (merge BE+FR si demandé) + filtres
     async getAPIFilms(page: string): Promise<void> {
         const language = process.env.TMDB_LANGUAGE || "fr-FR";
-        const region = process.env.TMDB_REGION || "FR";
+        const th = ratingThresholds();
+        const minOv = minOverviewChars();
 
-        const url =
-            `https://api.themoviedb.org/3/discover/movie` +
-            `?include_adult=false&include_video=false` +
-            `&language=${encodeURIComponent(language)}` +
-            `&region=${encodeURIComponent(region)}` +
-            `&sort_by=popularity.desc&page=${page}`;
+        const regions = theatricalRegions();
+        const union = new Map<number, TMDBMovie>();
 
-        try {
-            const res = await fetch(url, { headers: tmdbHeaders() });
-            if (!res.ok) {
-                console.error(`getAPIFilms HTTP Error: ${res.status} - ${res.statusText}`);
-                return;
+        for (const reg of regions) {
+            const url = buildDiscoverUrl({
+                page,
+                region: reg,
+                language,
+                minAvg10: th.minAvg10,
+                minVotes: th.minVotes
+            });
+
+            try {
+                const res = await fetch(url, { headers: tmdbHeaders() });
+                if (!res.ok) {
+                    console.error(`getAPIFilms HTTP Error [${reg}]: ${res.status} - ${res.statusText}`);
+                    continue;
+                }
+                const data = await res.json();
+                const results: TMDBMovie[] = Array.isArray(data?.results) ? (data.results as TMDBMovie[]) : [];
+                for (const m of results) union.set(m.id, m);
+            } catch (e) {
+                console.error(`Erreur Discover région ${reg} :`, e);
             }
-
-            const data = await res.json();
-            if (!Array.isArray(data?.results)) {
-                console.error("Les résultats de l’API sont manquants ou invalides.");
-                return;
-            }
-
-            // Filtrage contenu
-            const cleaned = data.results.filter(isNotSexual);
-
-            const filmRepository = AppDataSource.getRepository(FilmEntity);
-            const filmEntities = cleaned.map((film: any) => ({
-                id: film.id, // on utilise l'id TMDB comme PK (voir remarque entité ci-dessous)
-                title: film.title || 'Titre inconnu',
-                overview: film.overview || 'Pas de description disponible',
-                releaseDate: film.release_date ? new Date(film.release_date) : null,
-                imageUrl: film.poster_path ?? null,
-                genresId: Array.isArray(film.genre_ids) ? film.genre_ids.join(',') : '',
-                popularity: film.popularity ?? 0,
-                voteAverage: film.vote_average ?? 0,
-                voteCount: film.vote_count ?? 0
-            }));
-
-            await filmRepository.save(filmEntities);
-            console.log(`${filmEntities.length} films enregistrés dans la base de données (page ${page}).`);
-        } catch (error) {
-            console.error('Erreur lors de la récupération des films depuis TMDB :', error);
         }
+
+        const merged = Array.from(union.values())
+            .filter((m: TMDBMovie) => isNotSexual(m))
+            .filter((m: TMDBMovie) => passRating(m, th))
+            .filter((m: TMDBMovie) => hasOverview(m, minOv)); // <- nouveau filtre
+
+        if (!AppDataSource.isInitialized) await AppDataSource.initialize();
+        const repo = AppDataSource.getRepository(FilmEntity);
+
+        const entities = merged.map((film: TMDBMovie) => ({
+            id: film.id,
+            title: film.title || 'Titre inconnu',
+            overview: film.overview || 'Pas de description disponible',
+            releaseDate: film.release_date ? new Date(film.release_date) : null,
+            imageUrl: film.poster_path ?? null,
+            genresId: Array.isArray(film.genre_ids) ? film.genre_ids.join(',') : '',
+            popularity: film.popularity ?? 0,
+            voteAverage: film.vote_average ?? 0,
+            voteCount: film.vote_count ?? 0
+        }));
+
+        await repo.save(entities);
+        console.log(`${entities.length} films enregistrés (page ${page}, régions ${regions.join("/")}).`);
     }
 
-    // ✅ v4 + filtre "adult"/mots-clés + favoris
+    // Favoris depuis TMDB (filtre ciné BE/FR + providers) + filtres
     async getFavoriteFilmsFromAPI(genreIds: number[], providerIds: number[], page: number): Promise<any[]> {
         const language = process.env.TMDB_LANGUAGE || "fr-FR";
-        const region = process.env.TMDB_REGION || "FR";
+        const th = ratingThresholds();
+        const minOv = minOverviewChars();
 
-        const baseURL = "https://api.themoviedb.org/3/discover/movie";
-        const url =
-            `${baseURL}?include_adult=false&include_video=false` +
-            `&language=${encodeURIComponent(language)}` +
-            `&region=${encodeURIComponent(region)}` +
-            `&sort_by=popularity.desc&page=${page}` +
-            (genreIds.length ? `&with_genres=${genreIds.join(",")}` : "") +
-            (providerIds.length ? `&with_watch_providers=${providerIds.join(",")}&watch_region=${encodeURIComponent(region)}` : "");
+        const regions = theatricalRegions();
+        const union = new Map<number, TMDBMovie>();
 
-        try {
-            const response = await fetch(url, { headers: tmdbHeaders() });
+        for (const reg of regions) {
+            const url = buildDiscoverUrl({
+                page,
+                region: reg,
+                language,
+                minAvg10: th.minAvg10,
+                minVotes: th.minVotes,
+                genres: genreIds,
+                providers: providerIds,
+                providerRegion: reg,
+            });
 
-            if (!response.ok) {
-                console.error(`HTTP Error: ${response.status} - ${response.statusText}`);
-                if (response.status === 401) console.error("401: Vérifie TMDB_V4_TOKEN dans .env");
-                return [];
+            try {
+                const res = await fetch(url, { headers: tmdbHeaders() });
+                if (!res.ok) {
+                    console.error(`Favorites HTTP Error [${reg}]: ${res.status} - ${res.statusText}`);
+                    continue;
+                }
+                const data = await res.json();
+                const list: TMDBMovie[] = Array.isArray(data?.results) ? (data.results as TMDBMovie[]) : [];
+                for (const m of list) union.set(m.id, m);
+            } catch (e) {
+                console.error(`Erreur Discover favoris région ${reg} :`, e);
             }
-
-            const data = await response.json();
-            const list = Array.isArray(data?.results) ? data.results : [];
-
-            return list
-                .filter(isNotSexual)
-                .map((film: any) => ({
-                    id: film.id,
-                    title: film.title || "Titre inconnu",
-                    overview: film.overview || "Pas de description disponible",
-                    releaseDate: film.release_date || null,
-                    imageUrl: film.poster_path || null,
-                    genres: film.genre_ids || [],
-                    popularity: film.popularity || 0,
-                    voteAverage: film.vote_average || 0,
-                    voteCount: film.vote_count || 0
-                }));
-        } catch (error) {
-            console.error("Erreur lors de la récupération des films favoris :", error);
-            return [];
         }
+
+        return Array.from(union.values())
+            .filter((m: TMDBMovie) => isNotSexual(m))
+            .filter((m: TMDBMovie) => passRating(m, th))
+            .filter((m: TMDBMovie) => hasOverview(m, minOv)) // <- nouveau filtre
+            .map((film: TMDBMovie) => ({
+                id: film.id,
+                title: film.title || "Titre inconnu",
+                overview: film.overview || "Pas de description disponible",
+                releaseDate: film.release_date || null,
+                imageUrl: film.poster_path || null,
+                genres: film.genre_ids || [],
+                popularity: film.popularity || 0,
+                voteAverage: film.vote_average || 0,
+                voteCount: film.vote_count || 0
+            }));
     }
 }
 
