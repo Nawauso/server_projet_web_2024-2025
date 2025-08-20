@@ -1,24 +1,31 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import "reflect-metadata";
+import 'reflect-metadata';
+
 import filmRoutes from './routes/FilmRoute';
 import genreRoutes from './routes/GenreRoute';
 import providerRoutes from './routes/ProviderRoute';
 import authRoutes from './routes/AuthRoute';
 import criteriaRoutes from './routes/CriteriaRoute';
 import groupRoutes from './routes/GroupRoute';
-import { AppDataSource } from "./AppDataSource";
-import {AuthMiddleware} from "./middlewares/AuthMiddleware";
+
+import { AppDataSource } from './AppDataSource';
+import { AuthMiddleware } from './middlewares/AuthMiddleware';
+
 import { seedGenres } from './seed/SeedGenre';
 import { seedProviders } from './seed/SeedProvider';
+
+// 👉 IMPORTS AJOUTÉS
+import { UserEntity } from './entities/UserEntity';
+import bcrypt from 'bcrypt';
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || '8080';
 
 const corsOptions = {
-    origin: ["http://localhost:5173"],
+    origin: ['http://localhost:5173'],
 };
 
 app.use(cors(corsOptions));
@@ -35,21 +42,57 @@ app.use('/api/auth', authRoutes);
 AppDataSource.initialize()
     .then(async () => {
         try {
-            const [g, p] = await Promise.all([
-                seedGenres(),      // idempotent (n’ajoute pas les doublons)
-                seedProviders(),
+            const [g, p, u] = await Promise.all([
+                seedGenres(),      // idempotent
+                seedProviders(),   // idempotent
+                seedUsers(),       // 👈 seed utilisateurs par défaut (idempotent)
             ]);
-            console.log(`Seeds OK -> genres:+${g}, providers:+${p}`);
+            console.log(`Seeds OK -> genres:+${g}, providers:+${p}, users:+${u}`);
         } catch (e) {
             console.error('Erreur lors des seeds initiaux :', e);
         }
 
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
-        }).on("error", (err: Error) => {
+        }).on('error', (err: Error) => {
             console.error(err);
         });
     })
     .catch((err: Error) => {
         console.error(err);
     });
+
+/**
+ * Seed des utilisateurs par défaut (admin@cool.com / admin, user@cool.com / user)
+ * - Hash bcrypt
+ * - Idempotent (ne recrée pas si l'email existe)
+ */
+async function seedUsers(): Promise<number> {
+    const repo = AppDataSource.getRepository(UserEntity);
+
+    const wanted = [
+        { email: 'admin@cool.com', password: 'admin', firstName: 'Admin', lastName: 'Cool' },
+        { email: 'user@cool.com',  password: 'user',  firstName: 'User',  lastName: 'Cool'  },
+    ];
+
+    let inserted = 0;
+    for (const w of wanted) {
+        const exists = await repo.findOne({ where: { email: w.email } });
+        if (exists) continue;
+
+        const userData: Partial<UserEntity> = {
+            email: w.email,
+            password: await bcrypt.hash(w.password, 10),
+            // Si votre entité n'a pas firstName/lastName, ces champs seront simplement ignorés
+            // (les garder ne pose pas de souci si vos colonnes sont nullable=false : adaptez si besoin)
+            firstName: (w as any).firstName,
+            lastName:  (w as any).lastName,
+        };
+
+        const user = repo.create(userData as UserEntity);
+        await repo.save(user);
+        inserted++;
+        console.log(`User seeded: ${w.email}`);
+    }
+    return inserted;
+}

@@ -1,6 +1,10 @@
 import {NextFunction, Request, Response} from 'express';
 import jwt from 'jsonwebtoken';
 
+// middlewares/AuthMiddleware.ts
+import { RequestHandler } from 'express';
+
+
 interface CustomRequest extends Request {
     user?: any;
 }
