@@ -3,9 +3,6 @@ import { ProviderEntity } from "../entities/ProviderEntity";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Si Node < 18, décommente la ligne suivante et "npm i node-fetch"
-// // import fetch from "node-fetch";
-
 type TmdbProvider = { provider_id: number; provider_name: string; logo_path: string | null; };
 
 function buildHeaders() {
@@ -38,29 +35,43 @@ export async function seedProviders(): Promise<number> {
         fetchTmdbProviders("tv", REGION, LANGUAGE),
     ]);
 
-    // dédup par provider_id
+    // dédup par provider_id (TMDB)
     const map = new Map<number, TmdbProvider>();
     for (const p of [...movie, ...tv]) if (p?.provider_id) map.set(p.provider_id, p);
 
-    let inserted = 0;
+    let upserted = 0;
     for (const p of map.values()) {
         const name = (p.provider_name || "").trim();
         if (!name) continue;
 
-        const exists = await repo.findOne({ where: { name } });
-        if (exists) continue;
-
         const logoUrl = p.logo_path ? `${IMAGE_BASE}${p.logo_path}` : "";
-        await repo.save(repo.create({ name, logoUrl })); // id auto-généré
-        inserted++;
-        console.log(`Provider ajouté : ${name}`);
+
+        // upsert par tmdbId pour garder les mêmes lignes si on relance le seed
+        const existing = await repo.findOne({ where: { tmdbId: p.provider_id } });
+        if (existing) {
+            // met à jour name/logo si besoin
+            existing.name = name;
+            existing.logoUrl = logoUrl;
+            await repo.save(existing);
+            continue;
+        }
+
+        const row = repo.create({
+            name,
+            logoUrl,
+            tmdbId: p.provider_id, // ← clé TMDB
+        });
+        await repo.save(row);
+        upserted++;
+        console.log(`Provider ajouté/MAJ : ${name} (tmdbId=${p.provider_id})`);
     }
-    return inserted;
+
+    return upserted;
 }
 
-// Mode CLI : ts-node src/seed/SeedProvider.ts --cli
+// Mode CLI
 if (process.argv.includes("--cli")) {
     seedProviders()
-        .then(n => { console.log(`Seed Providers terminé (${n} ajoutés).`); process.exit(0); })
+        .then(n => { console.log(`Seed Providers terminé (${n} upsertés).`); process.exit(0); })
         .catch(e => { console.error(e); process.exit(1); });
 }

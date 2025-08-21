@@ -1,51 +1,56 @@
-import {PrimaryGeneratedColumn, Column, Entity, ManyToOne, OneToMany, ManyToMany, JoinTable} from "typeorm";
-import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
-import {GroupEntity} from "./GroupEntity";
-import {GenreEntity} from "./GenreEntity";
-import {ProviderEntity} from "./ProviderEntity";
-import {FilmEntity} from "./FilmEntity";
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    ManyToMany,
+    JoinTable,
+    ManyToOne,
+} from "typeorm";
+import { GenreEntity } from "./GenreEntity";
+import { ProviderEntity } from "./ProviderEntity";
+import { GroupEntity } from "./GroupEntity";
+import { FilmEntity } from "./FilmEntity";
 
-@Entity()
+@Entity({ name: "user_entity" })
 export class UserEntity {
     @PrimaryGeneratedColumn()
-    id!: number
+    id!: number;
 
-    @Column({unique: true})
-    @IsNotEmpty()
-    @IsEmail()
-    email!: string
-
-    @Column({nullable : true})
-    firstName!: string
-
-    @Column({nullable : true})
-    lastName!: string
+    @Column({ unique: true })
+    email!: string;
 
     @Column()
-    @IsNotEmpty()
-    @MinLength(10)
-    password!: string
+    password!: string;
 
-    @ManyToOne(() => GroupEntity, (group) => group.user, { nullable: true, onDelete: "SET NULL" })
-    group!: GroupEntity;
+    @Column({ nullable: true })
+    firstName?: string;
 
+    @Column({ nullable: true })
+    lastName?: string;
+
+    // Groupe (facultatif)
+    @ManyToOne(() => GroupEntity, (g) => g.user, { nullable: true })
+    group?: GroupEntity | null;
+
+    // ---- Critères (propriétaire) ----
     @ManyToMany(() => GenreEntity, (genre) => genre.selectedByUsers)
-    @JoinTable()
+    @JoinTable() // user_entity_selected_genres_genre_entity
     selectedGenres!: GenreEntity[];
 
     @ManyToMany(() => ProviderEntity, (provider) => provider.selectedByUsers)
-    @JoinTable()
+    @JoinTable() // user_entity_selected_providers_provider_entity
     selectedProviders!: ProviderEntity[];
 
+    // ---- Historique préférences films (propriétaire) ----
+    @ManyToMany(() => FilmEntity, (film) => film.viewedByUsers)
+    @JoinTable({ name: "user_viewed_films" })
+    viewedFilms!: FilmEntity[];
+
     @ManyToMany(() => FilmEntity, (film) => film.likedByUsers)
-    @JoinTable()
+    @JoinTable({ name: "user_liked_films" })
     likedFilms!: FilmEntity[];
 
     @ManyToMany(() => FilmEntity, (film) => film.dislikedByUsers)
-    @JoinTable()
+    @JoinTable({ name: "user_disliked_films" })
     dislikedFilms!: FilmEntity[];
-
-    @ManyToMany(() => FilmEntity, (film) => film.IsViewByUsers)
-    @JoinTable()
-    IsView!: boolean;
 }
