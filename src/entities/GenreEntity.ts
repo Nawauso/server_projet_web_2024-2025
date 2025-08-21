@@ -1,15 +1,17 @@
-import {PrimaryGeneratedColumn, Column, Entity, ManyToMany} from "typeorm";
-import {UserEntity} from "./UserEntity";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from "typeorm";
+import { UserEntity } from "./UserEntity";
 
-@Entity()
+@Entity({ name: "genre_entity" })
 export class GenreEntity {
     @PrimaryGeneratedColumn()
-    id!: number
+    id!: number;
 
-    @Column()
-    name!: string
+    @Column({ type: "varchar", unique: true })
+    name!: string;
 
-    @ManyToMany(() => UserEntity, (user) => user.selectedGenres) // Relation inverse
+    @Column({ type: "int", nullable: true, unique: true })
+    tmdbId!: number | null;
+
+    @ManyToMany(() => UserEntity, (user) => user.selectedGenres)
     selectedByUsers!: UserEntity[];
-
 }

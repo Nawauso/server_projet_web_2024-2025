@@ -3,9 +3,6 @@ import { GenreEntity } from "../entities/GenreEntity";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Si Node < 18, décommente la ligne suivante et "npm i node-fetch"
-// // import fetch from "node-fetch";
-
 function buildHeaders() {
     const token = process.env.TMDB_V4_TOKEN?.trim();
     if (!token) throw new Error("TMDB_V4_TOKEN manquant dans .env");
@@ -28,32 +25,36 @@ export async function seedGenres(): Promise<number> {
     const repo = AppDataSource.getRepository(GenreEntity);
 
     const language = process.env.TMDB_LANGUAGE || "fr-FR";
-    const [movie, tv] = await Promise.all([
-        fetchTmdbGenres("movie", language),
-        fetchTmdbGenres("tv", language),
-    ]);
+    const [movie, tv] = await Promise.all([fetchTmdbGenres("movie", language), fetchTmdbGenres("tv", language)]);
 
-    // dédup par nom (on ne garde que ce dont on a besoin)
-    const set = new Set<string>();
-    let inserted = 0;
-    for (const g of [...movie, ...tv]) {
+    // dédup par tmdb id
+    const map = new Map<number, { id: number; name: string }>();
+    for (const g of [...movie, ...tv]) if (g?.id) map.set(g.id, g);
+
+    let upserted = 0;
+    for (const g of map.values()) {
         const name = (g?.name || "").trim();
-        if (!name || set.has(name)) continue;
-        set.add(name);
+        if (!name) continue;
 
-        const exists = await repo.findOne({ where: { name } });
-        if (exists) continue;
+        const existing = await repo.findOne({ where: { tmdbId: g.id } });
+        if (existing) {
+            existing.name = name;
+            await repo.save(existing);
+            continue;
+        }
 
-        await repo.save(repo.create({ name })); // id auto-généré (PrimaryGeneratedColumn)
-        inserted++;
-        console.log(`Genre ajouté : ${name}`);
+        const row = repo.create({ name, tmdbId: g.id });
+        await repo.save(row);
+        upserted++;
+        console.log(`Genre ajouté/MAJ : ${name} (tmdbId=${g.id})`);
     }
-    return inserted;
+
+    return upserted;
 }
 
-// Mode CLI : ts-node src/seed/SeedGenre.ts --cli
+// Mode CLI
 if (process.argv.includes("--cli")) {
     seedGenres()
-        .then(n => { console.log(`Seed Genres terminé (${n} ajoutés).`); process.exit(0); })
+        .then(n => { console.log(`Seed Genres terminé (${n} upsertés).`); process.exit(0); })
         .catch(e => { console.error(e); process.exit(1); });
 }
