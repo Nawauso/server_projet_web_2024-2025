@@ -1,18 +1,28 @@
-# Scrum
-Pour ce projet, nous sommes deux et nous avons décidé de travailler en Scrum, du moins au début. Cela s'est fait en sprint de 2 semaines, avec une réunion de planification en début de sprint et une réunion en fin. Nous avons également décidé de travailler sur [Plane](https://plane.so/) pour la gestion de projet.
+Scrum
 
-### Premier sprint
+Pour ce projet, nous sommes deux et nous avons décidé de travailler en Scrum, du moins au début. Cela s’est fait en sprints de deux semaines, avec une réunion de planification en début de sprint et une réunion de clôture en fin de sprint. Nous avons également décidé d’utiliser Plane
+pour la gestion de projet.
 
-Ce fût un sprint de découverte, seuls les squelettes du client et du serveur ont étés fait, donc à peine des pages vitrines et un call api menant à rien. Tous les objectifs ont étés atteints en somme, c'était les premières données.
+Premier sprint
 
-### Deuxième sprint et troisième sprint?
+Ce fut un sprint de découverte : seuls les squelettes du client et du serveur ont été faits, donc à peine des pages vitrine et un appel API ne menant à rien. Tous les objectifs ont été atteints ; c’étaient les premières bases.
 
-Beaucoup de travail reporté plus au moins, objectifs visuel basique avec données hardcodés. Plus au moins réussis et données stockées dans un json.
+Deuxième et troisième sprints
 
-### Quatrième sprint
+Beaucoup de travail a été plus ou moins reporté. Objectifs visuels basiques avec des données en dur ; résultats plus ou moins réussis et données stockées dans un JSON.
 
-Ce fût le grand avancement sur le serveur, les premiers sprints étaient beaucoup accès sur le client, celui-ci avait pour objectif la liaison entre la base de donnée, le serveur et le client. 
+Quatrième sprint
 
-### La suite...
+Ce fut le grand avancement côté serveur. Les premiers sprints étaient beaucoup axés sur le client ; celui-ci avait pour objectif d’assurer la liaison entre la base de données, le serveur et le client.
 
-L'abandon progressif du scrum fût que nous n'avons que très peu de traces des sprints, beaucoup a été fait en présentiel sans notes, la seule historique étant les commits. La méthodologie n'a ainsi été pas respecté à partir du troisième sprint.
+La suite…
+
+L’abandon progressif de Scrum tient au fait que nous avons conservé très peu de traces des sprints : beaucoup a été fait en présentiel, sans prise de notes, l’unique historique restant les commits. La méthodologie n’a ainsi pas été respectée à partir du troisième sprint.
+
+Reprise pour la troisième session
+
+Le projet a été repris en début de semaine pour affiner le peu de fonctionnalités qu’il restait. Toutes les fonctionnalités demandées ont été implémentées.
+
+Jour J
+
+En cette dernière journée disponible pour rendre le projet, nous avons refactorisé beaucoup de fichiers et créé les tests unitaires. La vidéo de présentation a aussi été tournée.
