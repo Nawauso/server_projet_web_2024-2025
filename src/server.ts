@@ -9,6 +9,8 @@ import providerRoutes from './routes/ProviderRoute';
 import authRoutes from './routes/AuthRoute';
 import criteriaRoutes from './routes/CriteriaRoute';
 import groupRoutes from './routes/GroupRoute';
+import userRoutes from './routes/UserRoute';
+import rankRoutes from './routes/RankRoute';
 
 import { AppDataSource } from './AppDataSource';
 import { AuthMiddleware } from './middlewares/AuthMiddleware';
@@ -36,7 +38,8 @@ app.use('/api/films', AuthMiddleware, filmRoutes);
 app.use('/api/genres', AuthMiddleware, genreRoutes);
 app.use('/api/providers', AuthMiddleware, providerRoutes);
 app.use('/api/criterias', AuthMiddleware, criteriaRoutes);
-// Route publique auth
+app.use('/api/users', AuthMiddleware, userRoutes);
+app.use('/api/rank', AuthMiddleware, rankRoutes);
 app.use('/api/auth', authRoutes);
 
 AppDataSource.initialize()

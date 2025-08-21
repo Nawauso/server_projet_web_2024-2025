@@ -230,7 +230,41 @@ class FilmRepository {
                 voteAverage: film.vote_average || 0,
                 voteCount: film.vote_count || 0
             }));
+
+    }
+
+    async fetchMovieDetailsFromTMDB(id: number): Promise<TMDBMovie | null> {
+        const language = process.env.TMDB_LANGUAGE || "fr-FR";
+        const url = `https://api.themoviedb.org/3/movie/${id}?language=${encodeURIComponent(language)}`;
+        const res = await fetch(url, { headers: tmdbHeaders() });
+        if (!res.ok) return null;
+        return (await res.json()) as TMDBMovie;
+    }
+
+    async ensureFilmInDB(id: number): Promise<FilmEntity> {
+        if (!AppDataSource.isInitialized) await AppDataSource.initialize();
+        const repo = AppDataSource.getRepository(FilmEntity);
+
+        let row = await repo.findOne({ where: { id } });
+        if (row) return row;
+
+        const m = await this.fetchMovieDetailsFromTMDB(id);
+        row = repo.create({
+            id,
+            title: m?.title || m?.original_title || "Titre inconnu",
+            overview: (m?.overview || "Pas de description disponible").toString(),
+            releaseDate: m?.release_date ? new Date(m.release_date) : null,
+            imageUrl: m?.poster_path ?? null,
+            genresId: Array.isArray(m?.genre_ids) ? m!.genre_ids!.join(",") : null,
+            popularity: m?.popularity ?? 0,
+            voteAverage: m?.vote_average ?? 0,
+            voteCount: m?.vote_count ?? 0,
+        });
+        return await repo.save(row);
     }
 }
+
+
+
 
 export default FilmRepository;
